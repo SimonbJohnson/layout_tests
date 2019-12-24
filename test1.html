@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Force Layout Test 1</title>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script type="text/javascript" src="https://unpkg.com/force-in-a-box/dist/forceInABox.js"></script>
+<script src="nodes.js"></script>
+<body>
+</body>
+<script>
+  m=10;
+  width=500;
+  height=500;
+
+  color = d3.scaleSequential(d3.interpolateSinebow).domain([0,m-1]);
+
+  const svg = d3.select('body').append("svg").attr("width", width).attr("height", height);
+    
+  const g = svg.append("g")
+    // .attr("transform", `translate(${width/2},${height/2})`)
+
+  ////////////////////////////////////////////////////////////
+  //////////////////////// Draw nodes ////////////////////////
+  ////////////////////////////////////////////////////////////
+
+  const node = g.append("g")
+      .selectAll("circle")
+      .data(nodes)
+      .join("circle")
+      .attr("r", d => d.r)
+      .style("fill", d => color(d.cluster))
+
+  ////////////////////////////////////////////////////////////
+  ////////////////////// Run simulation //////////////////////
+  ////////////////////////////////////////////////////////////
+
+
+
+  const simulation = d3.forceSimulation()
+        .force("forceInABox", forceInABox()
+          .strength(0.1) // Strength to cluster center
+          .template("force") // Either treemap or force
+          .groupBy("cluster") // Node attribute to group
+          .links([]) // If you have links you can also use them
+          .forceNodeSize(d => d.r + 3)
+          .size([width, height])               
+         )
+        
+        // You still need some collision or charge
+        .force("collide", d3.forceCollide().radius(d => d.r + 1) .strength(0.8)) //Original collide function
+
+        //Instead use the custom collide function
+        // .force("collide", forceClusterCollision()
+        //        .radius(d => d.r + 1)
+        //        .strength(0.8)
+        //        .clusterPadding(10) //new setting - important, the cluster id of the data has to be named "cluster"
+        //  )
+        
+        // Force in a box sets the x and y, so you don't need these
+        // .force("x", d3.forceX().x(d => d.focusX).strength(0.1))
+        // .force("y", d3.forceY().y(d => d.focusY).strength(0.2))
+   
+  simulation
+        .nodes(nodes)
+        .on("tick", ticked)
+
+  function ticked() {
+    node
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y)
+  }//function ticked
+</script>
